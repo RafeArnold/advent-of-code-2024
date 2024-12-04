@@ -4,6 +4,7 @@ use std::str::Chars;
 fn main() {
     const INPUT: &str = include_str!("../input.txt");
     println!("{}", run_1(INPUT));
+    println!("{}", run_2(INPUT));
 }
 
 fn run_1(input: &str) -> usize {
@@ -21,6 +22,49 @@ fn run_1(input: &str) -> usize {
             }
             None => return sum,
         }
+    }
+}
+
+fn run_2(input: &str) -> usize {
+    let mut chars = input.chars().peekable();
+    let mut sum = 0;
+    let mut ignore = false;
+    loop {
+        match chars.peek() {
+            Some('m') if !ignore => match read_mul(&mut chars) {
+                Some((first, second)) => sum += first * second,
+                None => continue,
+            },
+            Some('d') => match read_do_or_dont(&mut chars) {
+                Some(is_do) => ignore = !is_do,
+                None => continue,
+            },
+            Some(_) => {
+                chars.next();
+            }
+            None => return sum,
+        }
+    }
+}
+
+fn read_do_or_dont(chars: &mut Peekable<Chars>) -> Option<bool> {
+    expect_char(chars, 'd')?;
+    expect_char(chars, 'o')?;
+    match chars.peek()? {
+        '(' => {
+            chars.next();
+            expect_char(chars, ')')?;
+            Some(true)
+        },
+        'n' => {
+            chars.next();
+            expect_char(chars, '\'')?;
+            expect_char(chars, 't')?;
+            expect_char(chars, '(')?;
+            expect_char(chars, ')')?;
+            Some(false)
+        },
+        _ => None,
     }
 }
 
@@ -77,6 +121,13 @@ mod tests {
         const INPUT: &str =
             "xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))";
         assert_eq!(run_1(INPUT), 161);
+    }
+
+    #[test]
+    fn challenge_2() {
+        const INPUT: &str =
+            "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))";
+        assert_eq!(run_2(INPUT), 48);
     }
 
     #[test]
