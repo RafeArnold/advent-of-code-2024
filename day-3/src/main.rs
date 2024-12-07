@@ -55,7 +55,7 @@ fn read_do_or_dont(chars: &mut Peekable<Chars>) -> Option<bool> {
             chars.next();
             expect_char(chars, ')')?;
             Some(true)
-        },
+        }
         'n' => {
             chars.next();
             expect_char(chars, '\'')?;
@@ -63,7 +63,7 @@ fn read_do_or_dont(chars: &mut Peekable<Chars>) -> Option<bool> {
             expect_char(chars, '(')?;
             expect_char(chars, ')')?;
             Some(false)
-        },
+        }
         _ => None,
     }
 }

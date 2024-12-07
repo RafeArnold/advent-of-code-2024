@@ -13,7 +13,9 @@ fn run_1(input: &str) -> usize {
 
 fn run_2(input: &str) -> usize {
     let (col1, col2) = parse_lines(input);
-    col1.iter().map(|a| col2.iter().filter(|b| a == *b).count() * a).sum()
+    col1.iter()
+        .map(|a| col2.iter().filter(|b| a == *b).count() * a)
+        .sum()
 }
 
 fn parse_lines(input: &str) -> (Vec<usize>, Vec<usize>) {
