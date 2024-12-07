@@ -84,7 +84,7 @@ fn expect_num(chars: &mut Peekable<Chars>) -> Option<usize> {
     let mut digits = Vec::with_capacity(3);
     for _ in 0..3 {
         let c = *chars.peek()?;
-        if matches!(c, '0'..='9') {
+        if c.is_ascii_digit() {
             chars.next();
             digits.push(c);
         } else {
