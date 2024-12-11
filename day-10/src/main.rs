@@ -4,9 +4,18 @@ use std::collections::BinaryHeap;
 fn main() {
     const INPUT: &str = include_str!("../input.txt");
     println!("{}", run_1(INPUT));
+    println!("{}", run_2(INPUT));
 }
 
 fn run_1(input: &str) -> usize {
+    run(input, calculate_score)
+}
+
+fn run_2(input: &str) -> usize {
+    run(input, calculate_rating)
+}
+
+fn run(input: &str, calculate: fn((usize, usize), &[(usize, usize)], &[Vec<u8>]) -> usize) -> usize {
     let map = input
         .lines()
         .map(|line| line.bytes().map(|byte| byte - b'0').collect::<Vec<_>>())
@@ -28,7 +37,7 @@ fn run_1(input: &str) -> usize {
     for (row_idx, row) in map.iter().enumerate() {
         for (col_idx, byte) in row.iter().enumerate() {
             if *byte == 0 {
-                sum += calculate_score((col_idx, row_idx), &trail_ends, &map);
+                sum += calculate((col_idx, row_idx), &trail_ends, &map);
             }
         }
     }
@@ -72,6 +81,40 @@ fn route_exists(start: (usize, usize), end: (usize, usize), map: &[Vec<u8>]) -> 
             }
         }
     }
+}
+
+fn calculate_rating(
+    trail_head_pos: (usize, usize),
+    trail_ends: &[(usize, usize)],
+    map: &[Vec<u8>],
+) -> usize {
+    let boundary = ((map[0].len() - 1) as isize, (map.len() - 1) as isize);
+    trail_ends
+        .iter()
+        .map(|&end| count_routes(trail_head_pos, end, map, boundary))
+        .sum()
+}
+
+fn count_routes(pos: (usize, usize), end: (usize, usize), map: &[Vec<u8>], boundary: (isize, isize)) -> usize {
+    if pos == end {
+        return 1;
+    }
+    let mut count = 0;
+    for to_move in [(0, 1), (1, 0), (-1, 0), (0, -1)] {
+        let next_pos = (pos.0 as isize + to_move.0, pos.1 as isize + to_move.1);
+        if next_pos.0 < 0
+            || next_pos.1 < 0
+            || next_pos.0 > boundary.0
+            || next_pos.1 > boundary.1
+        {
+            continue;
+        }
+        let next_pos = (next_pos.0 as usize, next_pos.1 as usize);
+        if map[next_pos.1][next_pos.0] == map[pos.1][pos.0] + 1 {
+            count += count_routes(next_pos, end, map, boundary);
+        }
+    }
+    count
 }
 
 struct State {
@@ -121,5 +164,10 @@ mod tests {
     #[test]
     fn challenge_1() {
         assert_eq!(run_1(INPUT), 36);
+    }
+
+    #[test]
+    fn challenge_2() {
+        assert_eq!(run_2(INPUT), 81);
     }
 }
