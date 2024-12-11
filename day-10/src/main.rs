@@ -1,6 +1,3 @@
-use std::cmp::{Ordering, Reverse};
-use std::collections::BinaryHeap;
-
 fn main() {
     const INPUT: &str = include_str!("../input.txt");
     println!("{}", run_1(INPUT));
@@ -15,7 +12,7 @@ fn run_2(input: &str) -> usize {
     run(input, calculate_rating)
 }
 
-fn run(input: &str, calculate: fn((usize, usize), &[(usize, usize)], &[Vec<u8>]) -> usize) -> usize {
+fn run(input: &str, calculate: fn((usize, usize), &[(usize, usize)], &[Vec<u8>], (isize, isize)) -> usize) -> usize {
     let map = input
         .lines()
         .map(|line| line.bytes().map(|byte| byte - b'0').collect::<Vec<_>>())
@@ -33,11 +30,12 @@ fn run(input: &str, calculate: fn((usize, usize), &[(usize, usize)], &[Vec<u8>])
             })
         })
         .collect::<Vec<_>>();
+    let boundary = ((map[0].len() - 1) as isize, (map.len() - 1) as isize);
     let mut sum = 0;
     for (row_idx, row) in map.iter().enumerate() {
         for (col_idx, byte) in row.iter().enumerate() {
             if *byte == 0 {
-                sum += calculate((col_idx, row_idx), &trail_ends, &map);
+                sum += calculate((col_idx, row_idx), &trail_ends, &map, boundary);
             }
         }
     }
@@ -48,47 +46,20 @@ fn calculate_score(
     trail_head_pos: (usize, usize),
     trail_ends: &[(usize, usize)],
     map: &[Vec<u8>],
+    boundary: (isize, isize),
 ) -> usize {
     trail_ends
         .iter()
-        .filter(|&&end| route_exists(trail_head_pos, end, map))
+        .filter(|&&end| count_routes(trail_head_pos, end, map, boundary) > 0)
         .count()
-}
-
-fn route_exists(start: (usize, usize), end: (usize, usize), map: &[Vec<u8>]) -> bool {
-    let boundary = ((map[0].len() - 1) as isize, (map.len() - 1) as isize);
-    let mut queue = BinaryHeap::new();
-    queue.push(Reverse(State::new(start, 0)));
-    loop {
-        let Some(Reverse(State { pos, travelled, .. })) = queue.pop() else {
-            return false;
-        };
-        if pos == end {
-            return true;
-        }
-        for to_move in [(0, 1), (1, 0), (-1, 0), (0, -1)] {
-            let next_pos = (pos.0 as isize + to_move.0, pos.1 as isize + to_move.1);
-            if next_pos.0 < 0
-                || next_pos.1 < 0
-                || next_pos.0 > boundary.0
-                || next_pos.1 > boundary.1
-            {
-                continue;
-            }
-            let next_pos = (next_pos.0 as usize, next_pos.1 as usize);
-            if map[next_pos.1][next_pos.0] == map[pos.1][pos.0] + 1 {
-                queue.push(Reverse(State::new(next_pos, travelled + 1)));
-            }
-        }
-    }
 }
 
 fn calculate_rating(
     trail_head_pos: (usize, usize),
     trail_ends: &[(usize, usize)],
     map: &[Vec<u8>],
+    boundary: (isize, isize),
 ) -> usize {
-    let boundary = ((map[0].len() - 1) as isize, (map.len() - 1) as isize);
     trail_ends
         .iter()
         .map(|&end| count_routes(trail_head_pos, end, map, boundary))
@@ -115,37 +86,6 @@ fn count_routes(pos: (usize, usize), end: (usize, usize), map: &[Vec<u8>], bound
         }
     }
     count
-}
-
-struct State {
-    travelled: usize,
-    pos: (usize, usize),
-}
-
-impl State {
-    fn new(pos: (usize, usize), travelled: usize) -> Self {
-        Self { pos, travelled }
-    }
-}
-
-impl Ord for State {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.travelled.cmp(&(other.travelled))
-    }
-}
-
-impl PartialOrd<Self> for State {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Eq for State {}
-
-impl PartialEq<Self> for State {
-    fn eq(&self, other: &Self) -> bool {
-        self.travelled.eq(&other.travelled)
-    }
 }
 
 #[cfg(test)]
