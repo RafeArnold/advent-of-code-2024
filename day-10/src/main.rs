@@ -12,7 +12,10 @@ fn run_2(input: &str) -> usize {
     run(input, calculate_rating)
 }
 
-fn run(input: &str, calculate: fn((usize, usize), &[(usize, usize)], &[Vec<u8>], (isize, isize)) -> usize) -> usize {
+fn run<F>(input: &str, calculate: F) -> usize
+where
+    F: Fn((usize, usize), &[(usize, usize)], &[Vec<u8>], (isize, isize)) -> usize,
+{
     let map = input
         .lines()
         .map(|line| line.bytes().map(|byte| byte - b'0').collect::<Vec<_>>())
@@ -66,18 +69,19 @@ fn calculate_rating(
         .sum()
 }
 
-fn count_routes(pos: (usize, usize), end: (usize, usize), map: &[Vec<u8>], boundary: (isize, isize)) -> usize {
+fn count_routes(
+    pos: (usize, usize),
+    end: (usize, usize),
+    map: &[Vec<u8>],
+    boundary: (isize, isize),
+) -> usize {
     if pos == end {
         return 1;
     }
     let mut count = 0;
     for to_move in [(0, 1), (1, 0), (-1, 0), (0, -1)] {
         let next_pos = (pos.0 as isize + to_move.0, pos.1 as isize + to_move.1);
-        if next_pos.0 < 0
-            || next_pos.1 < 0
-            || next_pos.0 > boundary.0
-            || next_pos.1 > boundary.1
-        {
+        if next_pos.0 < 0 || next_pos.1 < 0 || next_pos.0 > boundary.0 || next_pos.1 > boundary.1 {
             continue;
         }
         let next_pos = (next_pos.0 as usize, next_pos.1 as usize);
