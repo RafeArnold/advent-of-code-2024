@@ -1,8 +1,11 @@
 use std::cmp::Ordering;
+use std::collections::HashSet;
 
 fn main() {
     const INPUT: &str = include_str!("../input.txt");
-    println!("{}", run_1(INPUT, (101, 103)));
+    let boundary = (101, 103);
+    println!("{}", run_1(INPUT, boundary));
+    println!("{}", run_2(INPUT, boundary));
 }
 
 fn run_1(input: &str, boundary: (i64, i64)) -> i64 {
@@ -18,6 +21,11 @@ fn run_1(input: &str, boundary: (i64, i64)) -> i64 {
         })
         .into_iter()
         .product()
+}
+
+fn run_2(input: &str, boundary: (i64, i64)) -> u32 {
+    let robots = input.lines().map(parse_line).collect::<Vec<_>>();
+    move_robots(robots, boundary)
 }
 
 fn quadrant(robot: Robot, boundary: (i64, i64)) -> Option<usize> {
@@ -42,6 +50,31 @@ fn move_robot(mut robot: Robot, boundary: (i64, i64), i: i32) -> Robot {
         robot.position.1 = robot.position.1.rem_euclid(boundary.1);
     }
     robot
+}
+
+fn move_robots(mut robots: Vec<Robot>, boundary: (i64, i64)) -> u32 {
+    let mut i = 1;
+    loop {
+        for robot in &mut robots {
+            robot.position.0 += robot.velocity.0;
+            robot.position.0 = robot.position.0.rem_euclid(boundary.0);
+            robot.position.1 += robot.velocity.1;
+            robot.position.1 = robot.position.1.rem_euclid(boundary.1);
+        }
+        if no_overlaps(&robots) {
+            return i;
+        }
+        i += 1;
+    }
+}
+
+fn no_overlaps(robots: &[Robot]) -> bool {
+    robots
+        .iter()
+        .map(|robot| robot.position)
+        .collect::<HashSet<_>>()
+        .len()
+        == robots.len()
 }
 
 fn parse_line(input: &str) -> Robot {
